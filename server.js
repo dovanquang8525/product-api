@@ -7,13 +7,26 @@ const productRoutes = require("./routes/productRoutes");
 
 const app = express();
 
-// Middleware
 app.use(express.json());
 
-// Routes
 app.use("/api/products", productRoutes);
 
-// MongoDB connection
+// Health Check
+app.get("/health", (req, res) => {
+    if (mongoose.connection.readyState === 1) {
+        return res.status(200).json({
+            status: "UP",
+            database: "CONNECTED",
+        });
+    }
+
+    return res.status(503).json({
+        status: "DOWN",
+        database: "DISCONNECTED",
+    });
+});
+
+// MongoDB Connection
 mongoose
     .connect(process.env.MONGO_URI)
     .then(() => {
@@ -23,7 +36,6 @@ mongoose
         console.error("MongoDB connection failed:", error);
     });
 
-// Server
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
